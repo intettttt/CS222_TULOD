@@ -1,0 +1,41 @@
+section .data
+    msg db 'HELLO WORLD', 0 ; Null-terminated string
+    len equ $ - msg         ; Length of the string
+
+section .text
+    global _start           ; Make the entry point visible to the linker
+
+_start:
+    mov esi, msg            ; Point ESI to the start of the string
+    mov ecx, len            ; Counter ECX will keep the string length
+
+encrypt:
+    mov al, [esi]           ; Load the current character into AL
+    cmp al, 'A'             ; Check if character is after 'A'
+    jb .next                ; If before 'A', jump to next
+    cmp al, 'Z'             ; Check if character is before 'Z'
+    ja .next                ; If after 'Z', jump to next
+
+    add al, 3               ; Add 3 to the character
+    cmp al, 'Z'             ; Compare it with 'Z'
+    jle .store              ; If less or equal, just store it
+    sub al, 26              ; Else subtract 26 (wrap around)
+
+.store:
+    mov [esi], al           ; Store back the modified character
+
+.next:
+    inc esi                 ; Move to the next character
+    loop encrypt            ; Decrease ECX, repeat if not zero
+
+    ; Printing the encrypted message
+    mov eax, 4              ; Syscall number for sys_write
+    mov ebx, 1              ; File descriptor 1 is stdout
+    mov ecx, msg            ; Pointer to the message
+    mov edx, len            ; Length of the message
+    int 0x80                ; Perform the syscall
+
+    ; Exiting the program
+    mov eax, 1              ; Syscall number for sys_exit
+    xor ebx, ebx            ; Exit code 0
+    int 0x80                ; Perform the syscall
